@@ -28,7 +28,9 @@ Once the request comes from user to finastra.global  domain then request will fo
 Also customer will provide the SSL certificate and we will apply that for our application and that configuration will be mention in nginx.conf file
 
 
-_________
+_______________________________________________________________________________________________________________________________________________________________
+
+
 
 Deployment using docker-compose
 
@@ -48,3 +50,25 @@ For exposing application publically I will use nginx
 
 Once user request on domain as like finastra.global then request will forward to localhost:port and application can accessible 
 . And that all configuration will be written in nginx.conf file. And we will apply  the SSL certificate to application which will be mentioned in the nginx configuration file.
+
+_______________________________________________________________________________________________________________________________________________________________
+
+
+Deployment using Kubernetes
+
+
+Code will push to the github by developers 
+
+Will take the build using jenkins job.
+
+Will use this build in docker container using docker cp command, also will take base image as WAS application server and run that container, will login to that container using docker exec and install all the dependence which I required, once done will create image using docker commit command of running container. 
+
+And I will use this image in deployment.yaml, i will create service, secretes, ConfigMap, HPA, Ingress, Ingress controller, And i will do it this for all 10 microservices.
+
+once everthing is ready i will start to deploy step by step each and everything.
+
+For exposing the application to the publically, I will use ingress and ingress will forword the request to the service which comes from user ---- and then to pod (application).
+
+Once user request on domain as like finastra.global then request will forward to loadblancer from LB the ingress controller will listen the request and send to ingress resource --- server ---pod.
+
+And I will apply SSL certificate to application which will provided by customer, that SSL certificate key will be define in secrets and I will use that secrets in ingress resources file so that SSL will apply to application. 
