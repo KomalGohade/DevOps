@@ -1,0 +1,127 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0.37
+    container_name: dt_mysql
+    restart: always
+
+    volumes:
+      - ./mysqldata:/var/lib/mysql
+      - ./unified_db_new.sql:/docker-entrypoint-initdb.d/unified_db_new.sql
+    env_file:
+      - mysql.env
+    network_mode: "host"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+
+  nginx:
+    image: nginx:alpine
+    container_name: dt_nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/certs:/etc/nginx/certs
+    network_mode: "host"
+    depends_on:
+      - augmentoreact
+      - augbackend
+
+  annotation:
+    image: dockerrepo111/annotation:202412041227
+    container_name: dt_annotation
+    restart: always
+    volumes:
+      - ./augmento-annotation:/home/dev/annotation_logs
+    env_file:
+      - annotation.env
+    depends_on:
+      - mysql
+    network_mode: "host"
+
+
+  activemq:
+    image: dockerrepo111/activemq:202307111105
+    container_name: dt_activemq
+    restart: always
+    network_mode: "host"
+
+  dicomacceptor:
+    image: dockerrepo111/dicomacceptor:202412171043
+    container_name: dt_dicomacceptor
+    env_file:
+      - dicomacceptor.env
+    restart: always
+    volumes:
+      - ./augmento-dicomacceptor:/home/dev/dicomacceptor-logs
+    network_mode: "host"
+
+
+  thumbnail:
+    image: dockerrepo111/thumbnail_service:v1.2.1
+    container_name: dt_thumbnail
+    restart: always
+    network_mode: "host"
+    env_file: 
+      - thumbnail.env
+
+
+  dicomprocessor:
+    image: dockerrepo111/dicomprocessor:202412201033
+    container_name: dt_dicomprocessor
+    env_file:
+      - dps.env
+    restart: always
+    volumes:
+      - ./augmento-dps:/home/dev/logs
+    depends_on:
+      - mysql
+      - annotation
+      - thumbnail
+      - activemq
+    network_mode: "host"
+
+
+  augbackend:
+    image: dockerrepo111/augbackend:202412230705
+    container_name: dt_augbackend
+    env_file:
+      - augbackend.env
+    restart: always
+    volumes:
+      - ./augmento-backend:/home/dev/logs
+    network_mode: "host"
+    depends_on:
+      - mysql
+      - activemq
+
+  augmentoreact:
+    image: dockerrepo111/augmentoreact:202412170848
+    container_name: dt_augmentoreact
+    restart: always
+    env_file:
+      - augreact.env  # Path to the environment file    
+    environment:
+      REACT_APP_BACKEND_BASE_URL: https://icmronprem.deeptek.ai:9002/
+      REACT_APP_DICOM_ACCEPTOR_BASE_URL: https://dicomacceptor.deeptek.ai/
+        #    networks:
+        #      - host
+    network_mode: "host"
+    volumes:
+      - ./augmento-react:/home/dev/ui-logs  # Bind mount
+        #    network_mode: "host"  # Equivalent to --network="ho
+        #
+  dt_creds:
+    image: dockerrepo111/credential_service:v1.0.0
+    container_name: dt_creds
+    network_mode: host
+    env_file:
+      - creds.env
+    restart: always
+    volumes:
+      - ./credsdata:/Credential/src/cloud_credentials
+
+
+
+
