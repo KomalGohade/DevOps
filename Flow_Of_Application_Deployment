@@ -1,0 +1,50 @@
+On-prem deployment --- version till 4.6.6
+
+Prerequisites:-
+
+Install WAS/Weblogic
+IBM MQ
+Oracle 19c
+Elastic search -- need to install 
+Hezalcast - come up with code only
+ANT installation 
+
+-------
+
+Monolithic Application 
+
+Flow till deployment:-
+
+Developer make the changes in code and push to the github repo.
+
+After this Build will be created using jenkins job or we can create manually using .jar file
+
+For Deployment we used TPAT in house tool/ and also we can have jenkins job for deployment. And this application will deploy in WAS (Websphere Application Server) .ear file.
+
+Then this application will go accessible using nginx.
+
+Once the request comes from user to finastra.global  domain then request will forward to the loacalhost:port and then application is accessible and all that configuration will be written in nginx .conf file
+
+Also customer will provide the SSL certificate and we will apply that for our application and that configuration will be mention in nginx.conf file
+
+
+_________
+
+Deployment using docker-compose
+
+Code will push to the github by developers 
+
+Will take the build using jenkins job.
+
+Will use this build in docker container using docker cp command, also will take base image as WAS application server and run that container, will login to that container using docker exec and install all the dependence which I required, once done will create image using docker commit command of running container. 
+
+And I will use this image in docker-compose.yaml 
+
+And I will create this for all 10 microservices, this step are common but for some microservices we do not need all the package, libarary. It may be vary on basics of microservices. 
+
+Once we get the docker image I will deploy using docker-compose 
+
+For exposing application publically I will use nginx 
+
+Once user request on domain as like finastra.global then request will forward to localhost:port and application can accessible 
+. And that all configuration will be written in nginx.conf file. And we will apply  the SSL certificate to application which will be mentioned in the nginx configuration file.
