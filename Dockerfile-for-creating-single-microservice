@@ -1,0 +1,35 @@
+FROM ubuntu:22.04
+RUN apt-get update -y && apt-get install tzdata -y && apt-get install software-properties-common -y
+RUN ln -sf /usr/share/zoneinfo/Singapore /etc/localtime
+#RUN apt-get install wget -y
+RUN apt-get install tar -y
+RUN add-apt-repository ppa:libreoffice/ppa -y && apt-get install libreoffice -y
+WORKDIR /home/deeptek/smvapp_backend/
+
+RUN useradd -m -U -u 1001 deeptek
+RUN chown deeptek:deeptek /home/deeptek/smvapp_backend/
+USER deeptek
+
+COPY --chown=deeptek:deeptek java/OpenJDK8U-jdk_x64_linux_hotspot_8u402b06.tar.gz .
+RUN mkdir /home/deeptek/smvapp_backend/java &&  tar -C /home/deeptek/smvapp_backend/java -xzf OpenJDK8U-jdk_x64_linux_hotspot_8u402b06.tar.gz && rm -f OpenJDK8U-jdk_x64_linux_hotspot_8u402b06.tar.gz
+RUN mkdir /home/deeptek/smvapp_backend/temp_gcs_blob
+COPY --chown=deeptek:deeptek config/application.properties .
+COPY --chown=deeptek:deeptek src/main/resources/deeptek_2022.jks .
+COPY --chown=deeptek:deeptek dcmtk_bin/ ./dcmtk_bin/
+COPY --chown=deeptek:deeptek gdcm_bin/ ./gdcm_bin/
+COPY --chown=deeptek:deeptek dcm4che/ ./dcm4che/
+COPY --chown=deeptek:deeptek src/main/resources/rds-combined-ca-bundle.pem .
+COPY --chown=deeptek:deeptek src/main/resources/cacerts .
+COPY --chown=deeptek:deeptek target/deeptek-smartviewer-0.0.1-SNAPSHOT.jar .
+COPY --chown=deeptek:deeptek src/main/resources/sql_scripts/ ./sql_scripts/
+#RUN chmod -R 777 *
+
+ARG PROFILE
+ENV PROFILE=$PROFILE
+#RUN /opt/java/jdk1.8.0_211/bin/jar -xvf deeptek-smartviewer-0.0.1-SNAPSHOT.jar
+#RUN export DCMDICTPATH=./dcmtk_bin/dicom.dic
+ENV DCMDICTPATH=/home/deeptek/smvapp_backend/dcmtk_bin/dicom.dic
+#ENV DCMDICTPATH=./dcmtk_bin/dicom.dic
+#ARG dcmtk=/home/deeptek/smvapp_backend/dcmtk_bin/dicom.dic
+#ENV DCMDICTPATH=$dcmtk
+ENTRYPOINT ["/home/deeptek/smvapp_backend/java/jdk8u402-b06/bin/java","-Ddcmtk.home=/home/deeptek/smvapp_backend/dcmtk_bin","-Dspring.profiles.active=${PROFILE}", "-jar", "deeptek-smartviewer-0.0.1-SNAPSHOT.jar"]
