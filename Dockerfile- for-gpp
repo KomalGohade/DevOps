@@ -1,0 +1,39 @@
+# Base image
+FROM ubuntu:22.04
+
+# Install required dependencies
+RUN apt-get update -y && apt-get install -y \
+    tzdata \
+    software-properties-common \
+    tar \
+    curl \
+ && rm -rf /var/lib/apt/lists/*
+
+# Set timezone to UTC for global consistency
+RUN ln -sf /usr/share/zoneinfo/UTC /etc/localtime && echo "UTC" > /etc/timezone
+
+# Create a non-root user for running the app
+RUN useradd -m -U -u 1001 gppuser
+WORKDIR /home/gppuser/transaction-processor/
+
+# Change ownership of working directory
+RUN chown gppuser:gppuser /home/gppuser/transaction-processor/
+USER gppuser
+
+# Copy and extract the JDK
+COPY --chown=gppuser:gppuser java/OpenJDK8U-jdk_x64_linux_hotspot_8u402b06.tar.gz .
+RUN mkdir java && tar -C java -xzf OpenJDK8U-jdk_x64_linux_hotspot_8u402b06.tar.gz \
+    && rm -f OpenJDK8U-jdk_x64_linux_hotspot_8u402b06.tar.gz
+
+# Copy application-specific files
+COPY --chown=gppuser:gppuser config/application.properties .
+COPY --chown=gppuser:gppuser certs/rds-combined-ca-bundle.pem .
+COPY --chown=gppuser:gppuser certs/cacerts .
+COPY --chown=gppuser:gppuser target/transaction-processor-1.0.0.jar .
+
+# Set environment profile (dev/stage/prod)
+ARG PROFILE
+ENV PROFILE=${PROFILE}
+
+# Run the Java app
+ENTRYPOINT ["./java/jdk8u402-b06/bin/java", "-Dspring.profiles.active=${PROFILE}", "-jar", "transaction-processor-1.0.0.jar"]
