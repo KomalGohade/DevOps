@@ -13,23 +13,23 @@ RUN apt-get update -y && apt-get install -y \
 RUN ln -sf /usr/share/zoneinfo/UTC /etc/localtime && echo "UTC" > /etc/timezone
 
 # Create a non-root user for running the app
-RUN useradd -m -U -u 1001 gppuser
-WORKDIR /home/gppuser/transaction-processor/
+RUN useradd -m -U -u 1001 fundtech
+WORKDIR /home/fundtech/transaction-processor/
 
 # Change ownership of working directory
-RUN chown gppuser:gppuser /home/gppuser/transaction-processor/
-USER gppuser
+RUN chown fundtech:fundtech /home/fundtech/transaction-processor/
+USER fundtech
 
 # Copy and extract the JDK
-COPY --chown=gppuser:gppuser java/OpenJDK8U-jdk_x64_linux_hotspot_8u402b06.tar.gz .
+COPY --chown=fundtech:fundtech java/OpenJDK8U-jdk_x64_linux_hotspot_8u402b06.tar.gz .
 RUN mkdir java && tar -C java -xzf OpenJDK8U-jdk_x64_linux_hotspot_8u402b06.tar.gz \
     && rm -f OpenJDK8U-jdk_x64_linux_hotspot_8u402b06.tar.gz
 
 # Copy application-specific files
-COPY --chown=gppuser:gppuser config/application.properties .
-COPY --chown=gppuser:gppuser certs/rds-combined-ca-bundle.pem .
-COPY --chown=gppuser:gppuser certs/cacerts .
-COPY --chown=gppuser:gppuser target/transaction-processor-1.0.0.jar .
+COPY --chown=fundtech:fundtech config/application.properties .
+COPY --chown=fundtech:fundtech certs/rds-combined-ca-bundle.pem .
+COPY --chown=fundtech:fundtech certs/cacerts .
+COPY --chown=fundtech:fundtech target/transaction-processor-1.0.0.jar .
 
 # Set environment profile (dev/stage/prod)
 ARG PROFILE
